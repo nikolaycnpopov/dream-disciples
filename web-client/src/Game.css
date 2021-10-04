@@ -1,0 +1,449 @@
+/**
+ * Как это в целом работает:
+ * - Клиент получает изначальный стейт битвы - в нём два инкремента RoundStarted и UnitGotTurn - с т.з. анимаций юнитов
+ *   они не используются, но в стейте есть ...
+ * - По клику на юнит выставляется фаза 3 (подготовка к действию), за 0.4 секунды надувается действующий юнит - .unit-actor и сдуваются
+ *   выделения таргет селекшена, кроме юнита / юнитов, под действием абилки - .unit-target -> .unit-untarget. Одновременно
+ *   фиксируется жирное выделение на заафекченном юните .unit-the-target. Затем код ждет ещё 350 милисекунд и потом выставляет
+ *   стейт и эвенты из следующего батл апдейта вместе с фазой 4 (показать действия).
+ * - На фазе 4 действующий юнит за 0.6 секунды дергается по направлению к противнику, сразу после этого за 0.8 секунды
+ *   сдувается, ждет ещё 0.2 секунды и за 0.4 секунды сдувает свой бордер шадоу - 2 секунды на всё .unit-acting-[left/right].
+ *   В середине первого движения действующего юнита, незадолго до крайнего его смещения, появляется маска(и) эффекта на
+ *   заафекченном юните .unit-show-damage. Она исчезает синхронно с выделение действовавшего юнита (те же классы) и
+ *   заафекченного юнита .unit-the-target -> .unit-took-damage. Незадолго до полного исчезновения маски и выделений начинается
+ *   движение шкалы дамага .unit-health-mask-alive - оно заканчивается через 0.4 секунды после полного исчезновения масок.
+ *   Кодом ещё через полсекунды выставляется снова 1-я фаза и через полторы секунды вторая.
+ */
+
+.battle-field {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    border: solid darkblue;
+    background: #999999;
+    width: 80%;
+    margin: 15px auto;
+}
+
+.center-panel {
+    position: relative;
+    min-width: 350px;
+    margin: 20px;
+    padding: 0;
+}
+
+.actions-panel {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    vertical-align: bottom;
+    text-align: center;
+    margin: 0;
+}
+
+.action-button {
+    font-size: 16pt;
+    margin: 0 5px;
+}
+
+.squad {
+    display: flex;
+    border: solid cornflowerblue;
+    background: antiquewhite;
+    margin: 20px;
+    padding: 0;
+}
+
+.all-squad:hover .unit-potential-damage-target {
+    box-shadow: 0 0 5px 10px red;
+}
+
+.all-squad:hover .unit-potential-heal-target {
+    box-shadow: 0 0 5px 10px dodgerblue;
+}
+
+.squad-on-the-left {
+    direction: rtl;
+}
+
+.squad-on-the-right {
+    direction: ltr;
+}
+
+.squad-line {
+    display: grid;
+    /*direction: ltr;*/
+    margin: 10px;
+    background: inherit;
+    width: 150px;
+}
+
+.empty-cell {
+    display: flex;
+    justify-content: space-between;
+    direction: ltr;
+    width: 150px;
+    margin-bottom: 10px;
+}
+
+.empty-cell:last-of-type {
+    margin: 0;
+}
+
+.empty-cell-img {
+    background: darkgrey;
+    width: 70px;
+    height: 70px;
+    margin-right: 10px;
+}
+
+.empty-cell-img:last-of-type {
+    margin: 0;
+}
+
+.unit-cell {
+    direction: ltr;
+    background: deepskyblue;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.unit-cell:last-of-type {
+    margin: 0
+}
+
+.unit-health-mask {
+    z-index: 1;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+.unit-health-mask-alive {
+    background: red;
+    opacity: 0.75;
+    transition: height 0.6s 1.8s; /* движение начинается за 0.2s до того, как полностью исчезнет шторка дамага  */
+}
+
+.unit-health-mask-dead {
+    background: grey;
+    opacity: 0;
+    animation: show-mask-dead 0.6s 1.8s forwards;
+}
+
+@keyframes show-mask-dead {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.unit-show-heal {
+    z-index: 2;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    background: dodgerblue;
+    color: white;
+    font-size: 20pt;
+    /* Задержка в 0.15 секунды подобрана так, чтобы шторка начала появляться, когда движущийся юнит почти дошел до
+    своего крайнего положения и полностью появилась, когда он заканчивает движение - движение юнита не линейное и он
+    довольно много времени проводит вблизи крайнего положения плавно замедляясь.
+    Вторая задержка в 1.6 секунды запускает плавное исчезновение маски синхронно со сдуванием выделений действовавшего
+    и заафекченного юнитов.
+    */
+    animation-fill-mode: forwards;
+    animation-name: show-heal-mask, hide-heal-mask;
+    animation-delay: 0.15s, 1.6s;
+    animation-duration: 0.2s, 0.4s;
+}
+
+@keyframes show-heal-mask {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes hide-heal-mask {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.unit-show-damage {
+    z-index: 2;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    background: red;
+    color: white;
+    font-size: 20pt;
+    animation-fill-mode: forwards;
+    animation-name: show-damage-mask, hide-damage-mask;
+    animation-delay: 0.15s, 1.6s;
+    animation-duration: 0.2s, 0.4s;
+}
+
+@keyframes show-damage-mask {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes hide-damage-mask {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* У действия защиты нет подготовки - сразу запускается действие, unit-selected пропадает и отдельным дивом рисуется
+ заново выделение, оно начинает пропадать чуть позже, чем маска и чуть позже полностью пропадает. Весь процесс занимает
+ 1.2 секунды, после чего сразу начинается новый ход. При показе действия эвент игнорируется - т.к. он еще не выставлен
+ (хотя можно и выставлять), берется старый активный юнит - они всегда совпадают.*/
+.unit-taking-defensive-stance-border {
+    position: absolute;
+    display: flex;
+    box-shadow: 0 0 5px 10px yellow;
+    animation-fill-mode: forwards;
+    animation-name: hide-selection-border;
+    animation-delay: 0.8s;
+    animation-duration: 0.4s;
+}
+
+@keyframes hide-selection-border {
+    from {
+        box-shadow: 0 0 5px 10px yellow;
+    }
+    to {
+        box-shadow: 0 0 0 0 yellow;
+    }
+}
+
+.unit-taking-defensive-stance-mask {
+    z-index: 3;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    background: rgba(47, 79, 79, 0.25);
+    color: white;
+    font-size: 20pt;
+    animation-fill-mode: forwards;
+    animation-name: show-damage-mask, hide-damage-mask; /* Скопировано с unit-show-damage, но работает - переименовать анимации?. */
+    animation-delay: 0s, 0.8s, 0.6s;
+    animation-duration: 0.2s, 0.2s, 0.4s;
+}
+
+.unit-name {
+    z-index: 3;
+    position: absolute;
+    top: 0;
+    padding: 3px;
+    width: 100%;
+    text-align: center;
+}
+
+.name-label {
+    background: white;
+    opacity: 0.75;
+}
+
+.unit-status {
+    z-index: 3;
+    position: absolute;
+    bottom: 0;
+    padding: 3px;
+    width: 100%;
+    text-align: center;
+}
+
+.block-label {
+    background: dodgerblue;
+    color: white;
+    font-weight: bold;
+    padding: 3px 10px;
+    opacity: 0.75;
+}
+
+.health-label {
+    background: white;
+    opacity: 0.75;
+}
+
+.regular-unit-cell {
+    width: 150px;
+    height: 150px;
+}
+
+.large-unit-cell {
+    width: 320px;
+    height: 150px;
+    z-index: 1;
+}
+
+.giant-unit-cell {
+    width: 150px;
+    height: 310px;
+}
+
+/* additional unit classes */
+
+.unit-potential-heal-target {
+    box-shadow: 0 0 5px 5px dodgerblue;
+    transition: box-shadow 0.4s ease-in-out;
+}
+
+.unit-potential-heal-target:hover {
+    box-shadow: 0 0 5px 10px dodgerblue;
+}
+
+.unit-unselected-heal-target {
+    box-shadow: 0 0 0 0 dodgerblue;
+    transition: box-shadow 0.4s ease-in-out;
+}
+
+.unit-selected-heal-target {
+    box-shadow: 0 0 5px 10px dodgerblue;
+}
+
+.unit-potential-damage-target {
+    box-shadow: 0 0 5px 5px red;
+    transition: box-shadow 0.4s ease-in-out;
+}
+
+.unit-potential-damage-target:hover {
+    box-shadow: 0 0 5px 10px red;
+}
+
+.unit-unselected-damage-target {
+    box-shadow: 0 0 0 0 red;
+    transition: box-shadow 0.4s ease-in-out;
+}
+
+.unit-selected-damage-target {
+    box-shadow: 0 0 5px 10px red;
+}
+
+.unit-took-heal {
+    box-shadow: 0 0 0 0 dodgerblue;
+    /* Задержка в 1.5 секунды подобрана вручную - по идее надо начинать через 1.6 секунды, синхронно с remove-box-shadow,
+     но почему-то транзишн (видимо просто визуально, из-за цвета) длится дольше, по идее, такой же анимации. И с такой
+     задержкой шторка дамага начинает исчезать когда бордер шадоу уже подсдулся, что в целом хорошо выглядит. */
+    transition: box-shadow 0.4s 1.5s;
+}
+
+.unit-took-damage {
+    box-shadow: 0 0 0 0 red;
+    transition: box-shadow 0.4s 1.5s;
+}
+
+.unit-selected {
+    animation: show-selected-box-shadow 0.2s 0.5s 5 alternate forwards;
+}
+
+@keyframes show-selected-box-shadow {
+    from {
+        box-shadow: 0 0 0 0 yellow;
+    }
+    to {
+        box-shadow: 0 0 5px 10px yellow;
+    }
+}
+
+.unit-actor {
+    z-index: 10;
+    transform: scale(1.2, 1.2);
+    transition: transform 0.4s ease-in-out;
+}
+
+.unit-acting-left {
+    z-index: 10;
+    box-shadow: 0 0 5px 10px yellow;
+    animation-fill-mode: forwards;
+    animation-name: attack-left, scale-to-normal, remove-box-shadow;
+    animation-delay: 0s, 0.6s, 1.6s;
+    animation-duration: 0.6s, 0.8s, 0.4s;
+}
+
+@keyframes attack-left {
+    0% {
+        transform: scale(1.2, 1.2) translateX(0);
+    }
+    50% {
+        transform: scale(1.2, 1.2) translateX(75px);
+    }
+    100% {
+        transform: scale(1.2, 1.2) translateX(0);
+    }
+}
+
+@keyframes scale-to-normal {
+    0% {
+        transform : scale(1.2, 1.2) translateX(0)
+    }
+    100% {
+        transform : scale(1, 1) translateX(0)
+    }
+}
+
+@keyframes remove-box-shadow {
+    0% {
+        box-shadow: 0 0 5px 10px yellow;
+    }
+    100% {
+        box-shadow: 0 0 0 0 yellow;
+    }
+}
+
+.unit-acting-right {
+    z-index: 10;
+    box-shadow: 0 0 0 0 yellow;
+    transform: scale(1, 1);
+    animation: attack-right 2.4s backwards;
+}
+
+@keyframes attack-right {
+    0% {
+        box-shadow: 0 0 5px 10px yellow;
+        transform : scale(1.2, 1.2) translateX(0)
+    }
+    12.5% { /* 0.3s - движение вперёд */
+        box-shadow: 0 0 5px 10px yellow;
+        transform : scale(1.2, 1.2) translateX(-75px)
+    }
+    25% { /* 0.3s - движение назад */
+        box-shadow: 0 0 5px 10px yellow;
+        transform : scale(1.2, 1.2) translateX(0)
+    }
+    62.5% { /* 0.9s - сдувание */
+        box-shadow: 0 0 5px 10px yellow;
+        transform : scale(1, 1) translateX(0)
+    }
+    87.5% { /* 0.6s - пауза*/
+        box-shadow: 0 0 5px 10px yellow;
+        transform : scale(1, 1) translateX(0)
+    }
+    100% { /* 0.3s - сдувание выделения */
+        box-shadow: 0 0 0 0 yellow;
+        transform : scale(1, 1) translateX(0)
+    }
+}

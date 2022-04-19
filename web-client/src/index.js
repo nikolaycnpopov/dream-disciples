@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 // import App from './App';
 // import Game from './Game';
-import Game from './Game3';
+import Game from './Game';
 // import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(

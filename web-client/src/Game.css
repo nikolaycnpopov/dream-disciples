@@ -330,22 +330,85 @@
 }
 
 .unit-potential-damage-target {
-    box-shadow: 0 0 5px 5px red;
-    transition: box-shadow 0.4s ease-in-out;
+    animation: show-unit-potential-damage-target-box-shadow 0.25s forwards;
 }
 
-.unit-potential-damage-target:hover {
-    box-shadow: 0 0 5px 10px red;
+@keyframes show-unit-potential-damage-target-box-shadow {
+    from {
+        box-shadow: 0 0 0 0 red;
+    }
+    to {
+        box-shadow: 0 0 5px 5px red;
+    }
+}
+
+/*.unit-potential-damage-target:hover {*/
+/*    box-shadow: 0 0 5px 10px red;*/
+/*}*/
+
+.unit-potential-damage-target-hover {
+    animation: show-unit-potential-damage-target-hover-box-shadow 0.25s forwards;
+}
+
+@keyframes show-unit-potential-damage-target-hover-box-shadow {
+    from {
+        box-shadow: 0 0 5px 5px red;
+    }
+    to {
+        box-shadow: 0 0 5px 10px red;
+    }
+}
+
+.unit-potential-damage-target-out {
+    animation: show-unit-potential-damage-target-out-box-shadow 0.25s forwards;
+}
+
+@keyframes show-unit-potential-damage-target-out-box-shadow {
+    from {
+        box-shadow: 0 0 5px 10px red;
+    }
+    to {
+        box-shadow: 0 0 5px 5px red;
+    }
 }
 
 .unit-unselected-damage-target {
-    box-shadow: 0 0 0 0 red;
-    transition: box-shadow 0.4s ease-in-out;
+    animation: show-unit-potential-damage-target-box-shadow 5s reverse forwards;
 }
 
+/* ?? */
 .unit-selected-damage-target {
-    box-shadow: 0 0 5px 10px red;
+    animation: show-unit-potential-damage-target-box-shadow 0.25s forwards;
 }
+
+@keyframes show-unit-selected-damage-target-box-shadow {
+    from {
+        box-shadow: 0 0 5px 5px red;
+    }
+    to {
+        box-shadow: 0 0 5px 10px red;
+    }
+}
+
+/*.unit-potential-damage-target {*/
+/*    box-shadow: 0 0 5px 5px red;*/
+/*    transition: box-shadow 0.4s ease-in-out;*/
+/*}*/
+
+/*.unit-potential-damage-target:hover {*/
+/*    box-shadow: 0 0 5px 10px red;*/
+/*}*/
+
+/*.unit-unselected-damage-target {*/
+/*    box-shadow: 0 0 0 0 red;*/
+/*    transition: box-shadow 0.4s ease-in-out;*/
+/*}*/
+
+/*.unit-selected-damage-target {*/
+/*    box-shadow: 0 0 5px 10px red;*/
+/*}*/
+
+/**/
 
 .unit-took-heal {
     box-shadow: 0 0 0 0 dodgerblue;
@@ -361,7 +424,7 @@
 }
 
 .unit-selected {
-    animation: show-selected-box-shadow 0.2s 0.5s 5 alternate forwards;
+    animation: show-selected-box-shadow 0.5s forwards;
 }
 
 @keyframes show-selected-box-shadow {

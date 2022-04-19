@@ -37,6 +37,14 @@ class Game extends React.Component {
 
         this.requestStartBattle(units1, units2).then(
             (result) => {
+                // todo: по идее надо выставить battleUpdate в стейт и дернуть типа рендер,
+                //  а рендер уже должен пойти по стандартному пайплайну:
+                //  1. Показать действие юнита с очередью эффектов:
+                //     - шторка дамага / промаха
+                //     - черепушка
+                //     - эффект или щиты от эффектов
+                //     - ИЛИ шторка действия на юните - стойка, вэйт и т.д. или сразу разворот
+                //  2. Показать (сразу) активного юнита, его цели и доступные действия.
                 this.startNextTurn(result.battleUpdate)
             },
             (error) => {
@@ -54,11 +62,11 @@ class Game extends React.Component {
             phase: 1 // Начинаем новый ход. У .unit-selected ещё есть задержка 0.5 секунды.
         });
 
-        setTimeout(() => {
-            this.setState({
-                phase: 2 // показать таргеты
-            });
-        }, 1500); // секунда на анимацию .unit-selected плюс полсекунды на задержку перед этой анимацией. Появление
+        // setTimeout(() => {
+        //     this.setState({
+        //         phase: 2 // показать таргеты
+        //     });
+        // }, 1); // секунда на анимацию .unit-selected плюс полсекунды на задержку перед этой анимацией. Появление
         // выделений таргет селекшена синхронизировано с завершением мигания желтого выделения - если править,
         // нужно править и там тоже.
     }
@@ -192,11 +200,6 @@ class Game extends React.Component {
 
         let battleUpdate = await this.requestUnitAction("USE_ABILITY", targetUnitId);
 
-        // todo: когда это он null?
-        // if (battleUpdate === null) {
-        //     return;
-        // }
-
         setTimeout(() => {
             this.setState({
                 battleEvents: battleUpdate.battleEvents,
@@ -274,15 +277,19 @@ class Game extends React.Component {
 
             let activeUnit = this.getActiveUnit()
 
-            if (this.state.phase < 4) {
-                if (unit.id === activeUnit.id) {
-                    unit.selected = true;
-                }
-            }
+            // if (this.state.phase < 4) {
+            //     if (unit.id === activeUnit.id) {
+            //         unit.selected = true;
+            //     }
+            // }
 
             let activeUnitClassAbility = this.getActiveUnitClassAbility()
 
-            if (this.state.phase === 2) {
+            if (this.state.phase === 1) {
+                if (unit.id === activeUnit.id) {
+                    unit.selected = true;
+                }
+
                 if (activeUnit.abilities[0].targetSelectionUnitIds.includes(unit.id)) {
                     if (activeUnitClassAbility.type === "HEAL_ANY" || activeUnitClassAbility.type === "HEAL_ALL") {
                         unit.potentialHealTarget = true;
@@ -477,7 +484,7 @@ class UnitCell extends React.Component {
     constructor(props) {
         super(props);
 
-        this.state = { mouseIsOver: false }
+        this.state = { virgin: true, mouseIsOver: false }
     }
 
     render() {
@@ -486,7 +493,13 @@ class UnitCell extends React.Component {
         let unitSizeTypeClassName = this.toUnitSizeTypeClassName(sizeTypeOf(unit));
         let unitSelectedClassName = unit.selected ? " unit-selected" : "";
         let unitPotentialHealTargetClassName = unit.potentialHealTarget ? " unit-potential-heal-target" : "";
-        let unitPotentialDamageTargetClassName = unit.potentialDamageTarget ? " unit-potential-damage-target" : "";
+        let unitPotentialDamageTargetClassName = unit.potentialDamageTarget
+            ? this.state.virgin
+                ? " unit-potential-damage-target"
+                : this.state.mouseIsOver
+                    ? " unit-potential-damage-target-hover"
+                    : " unit-potential-damage-target-out"
+            : "";
         let unitSelectedHealTargetClassName = unit.selectedHealTarget ? " unit-selected-heal-target" : "";
         let unitUnselectedHealTargetClassName = unit.unselectedHealTarget ? " unit-unselected-heal-target" : "";
         let unitSelectedDamageTargetClassName = unit.selectedDamageTarget ? " unit-selected-damage-target" : "";
@@ -513,13 +526,19 @@ class UnitCell extends React.Component {
                 unitTookDamageClassName
             }
                  onClick={() => this.props.onClick(unit)}
-                 onMouseEnter={() => {
+                 onMouseOver={() => {
                      // console.log('ENTER');
-                     this.state.mouseIsOver = true
+                     this.setState({
+                         mouseIsOver: true,
+                         virgin: false
+                     });
                  }}
-                 onMouseLeave={() => {
+                 onMouseOut={() => {
                      // console.log('LEAVE');
-                     this.state.mouseIsOver = false
+                     this.setState({
+                         mouseIsOver: false,
+                         virgin: false
+                     });
                  }}
             >
                 {this.renderContent()}

@@ -97,11 +97,12 @@ class HelloController {
         val spent = debt + includeDebit + includeCash - exclude
         val spentCredit = spent - includeDebit - includeCash
 
-        val balance =
-            "Available: ${available.formatted()} of limit ${limit.formatted()}\n" +
-                    "Spent: ${spent.formatted()} total; ${spentCredit.formatted()} credit, ${includeDebit.formatted()} debit, ${includeCash.formatted()} cash.\n" +
-                    "Excluded: ${exclude.formatted()}\n" +
-                    "Debt: ${debt.formatted()}"
+        val balance = """
+            Available: ${available.formatted()} of limit ${limit.formatted()}
+            Spent: ${spent.formatted()} total, ${spentCredit.formatted()} credit, ${includeDebit.formatted()} debit, ${includeCash.formatted()} cash.
+            Excluded: ${exclude.formatted()}
+            Debt: ${debt.formatted()}
+        """.trimIndent()
 
         logger.info(balance)
 

@@ -53,7 +53,9 @@ class BattleController {
     }
 
     companion object {
+
         private val logger = LoggerFactory.getLogger(BattleController::class.java)
+
     }
 
 }

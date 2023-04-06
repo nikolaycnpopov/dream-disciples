@@ -62,11 +62,13 @@ class Game extends React.Component {
             phase: 1 // Начинаем новый ход. У .unit-selected ещё есть задержка 0.5 секунды.
         });
 
-        // setTimeout(() => {
-        //     this.setState({
-        //         phase: 2 // показать таргеты
-        //     });
-        // }, 1); // секунда на анимацию .unit-selected плюс полсекунды на задержку перед этой анимацией. Появление
+        // todo: В СЛЕДУЮЩИЙ РАЗ: попробовать выставлять юнитов в фазу 0 без выделений вообще и через милисекунду менять
+        //  на текущую фазу 1 (объединенные 1 и 2). Желтое выделение, соответственно, сделать на транзишене.
+        setTimeout(() => {
+            this.setState({
+                phase: 2 // показать таргеты
+            });
+        }, 1); // секунда на анимацию .unit-selected плюс полсекунды на задержку перед этой анимацией. Появление
         // выделений таргет селекшена синхронизировано с завершением мигания желтого выделения - если править,
         // нужно править и там тоже.
     }
@@ -277,19 +279,15 @@ class Game extends React.Component {
 
             let activeUnit = this.getActiveUnit()
 
-            // if (this.state.phase < 4) {
-            //     if (unit.id === activeUnit.id) {
-            //         unit.selected = true;
-            //     }
-            // }
-
-            let activeUnitClassAbility = this.getActiveUnitClassAbility()
-
-            if (this.state.phase === 1) {
+            if (this.state.phase < 4) {
                 if (unit.id === activeUnit.id) {
                     unit.selected = true;
                 }
+            }
 
+            let activeUnitClassAbility = this.getActiveUnitClassAbility()
+
+            if (this.state.phase === 2) {
                 if (activeUnit.abilities[0].targetSelectionUnitIds.includes(unit.id)) {
                     if (activeUnitClassAbility.type === "HEAL_ANY" || activeUnitClassAbility.type === "HEAL_ALL") {
                         unit.potentialHealTarget = true;
@@ -481,25 +479,13 @@ function EmptyCell(props) {
 
 class UnitCell extends React.Component {
 
-    constructor(props) {
-        super(props);
-
-        this.state = { virgin: true, mouseIsOver: false }
-    }
-
     render() {
         let unit = this.props.unit;
 
         let unitSizeTypeClassName = this.toUnitSizeTypeClassName(sizeTypeOf(unit));
         let unitSelectedClassName = unit.selected ? " unit-selected" : "";
         let unitPotentialHealTargetClassName = unit.potentialHealTarget ? " unit-potential-heal-target" : "";
-        let unitPotentialDamageTargetClassName = unit.potentialDamageTarget
-            ? this.state.virgin
-                ? " unit-potential-damage-target"
-                : this.state.mouseIsOver
-                    ? " unit-potential-damage-target-hover"
-                    : " unit-potential-damage-target-out"
-            : "";
+        let unitPotentialDamageTargetClassName = unit.potentialDamageTarget ? " unit-potential-damage-target" : "";
         let unitSelectedHealTargetClassName = unit.selectedHealTarget ? " unit-selected-heal-target" : "";
         let unitUnselectedHealTargetClassName = unit.unselectedHealTarget ? " unit-unselected-heal-target" : "";
         let unitSelectedDamageTargetClassName = unit.selectedDamageTarget ? " unit-selected-damage-target" : "";
@@ -526,20 +512,6 @@ class UnitCell extends React.Component {
                 unitTookDamageClassName
             }
                  onClick={() => this.props.onClick(unit)}
-                 onMouseOver={() => {
-                     // console.log('ENTER');
-                     this.setState({
-                         mouseIsOver: true,
-                         virgin: false
-                     });
-                 }}
-                 onMouseOut={() => {
-                     // console.log('LEAVE');
-                     this.setState({
-                         mouseIsOver: false,
-                         virgin: false
-                     });
-                 }}
             >
                 {this.renderContent()}
             </div>

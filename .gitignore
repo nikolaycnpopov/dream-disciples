@@ -1,4 +1,4 @@
-HELP.md
+### Gradle ###
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -13,3 +13,9 @@ build/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+
+### Kotlin ###
+.kotlin
+
+### Mac OS ###
+.DS_Store

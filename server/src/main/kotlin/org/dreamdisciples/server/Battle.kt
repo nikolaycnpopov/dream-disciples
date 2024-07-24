@@ -1,7 +1,7 @@
-package com.dreamdisciples.backend
+package org.dreamdisciples.server
 
-import com.dreamdisciples.backend.AbilityType.*
-import com.dreamdisciples.backend.UnitEffectType.DEFENSIVE_STANCE
+import org.dreamdisciples.server.AbilityType.*
+import org.dreamdisciples.server.UnitEffectType.DEFENSIVE_STANCE
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random

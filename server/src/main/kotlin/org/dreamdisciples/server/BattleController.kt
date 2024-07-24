@@ -1,7 +1,7 @@
-package com.dreamdisciples.backend
+package org.dreamdisciples.server
 
-import com.dreamdisciples.backend.UnitActionType.TAKE_DEFENSIVE_STANCE
-import com.dreamdisciples.backend.UnitActionType.USE_ABILITY
+import org.dreamdisciples.server.UnitActionType.TAKE_DEFENSIVE_STANCE
+import org.dreamdisciples.server.UnitActionType.USE_ABILITY
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.CrossOrigin

@@ -1,4 +1,4 @@
-package com.dreamdisciples.backend
+package org.dreamdisciples.server
 
 data class UnitClass(
     val name: String,

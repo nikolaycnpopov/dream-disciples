@@ -1,3 +1,4 @@
 rootProject.name = "dream-disciples"
 
-include("backend")
+include("server")
+include("web-client")

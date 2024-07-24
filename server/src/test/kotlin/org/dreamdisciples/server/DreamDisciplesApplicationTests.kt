@@ -1,4 +1,4 @@
-package com.dreamdisciples.backend
+package org.dreamdisciples.server
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
